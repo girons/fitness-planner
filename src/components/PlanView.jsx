@@ -65,10 +65,10 @@ export default function PlanView({ workouts, addWorkout, updateWorkout, deleteWo
 
   return (
     <div className="pb-6">
-      {/* Day column headers */}
-      <div className="grid grid-cols-7 border-b border-gray-100 bg-white sticky top-0 z-10">
+      {/* Day headers */}
+      <div className="grid grid-cols-7 border-b border-gray-100 bg-white sticky top-0 z-10 shadow-sm">
         {DAY_HEADERS.map(d => (
-          <div key={d} className="py-2 text-center text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+          <div key={d} className="py-2 md:py-3 text-center text-[11px] md:text-xs font-semibold text-gray-400 uppercase tracking-wide">
             {d}
           </div>
         ))}
@@ -77,8 +77,8 @@ export default function PlanView({ workouts, addWorkout, updateWorkout, deleteWo
       <div className="divide-y divide-gray-100">
         {weeks.map((days, wi) => (
           <div key={wi}>
-            <div className="px-3 py-1.5 bg-gray-50 flex items-center gap-2">
-              <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+            <div className="px-4 py-1.5 bg-gray-50 flex items-center gap-2 border-b border-gray-100">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
                 Week {wi + 1}
               </span>
               <span className="text-[11px] text-gray-300">
@@ -97,20 +97,25 @@ export default function PlanView({ workouts, addWorkout, updateWorkout, deleteWo
                   <button
                     key={di}
                     onClick={() => handleDayClick(date)}
-                    className={`flex flex-col items-center pt-2 pb-2.5 min-h-[58px] transition-colors
+                    className={`flex flex-col items-center pt-2 pb-2.5 min-h-[58px] md:min-h-[80px] transition-colors
                       ${isToday ? 'bg-red-50' : isPast && !hasWorkout ? 'bg-gray-50/60' : 'bg-white'}
                       hover:bg-gray-100 active:bg-gray-200`}
                   >
                     <span className={`text-xs leading-none mb-1.5 flex items-center justify-center
                       ${isToday
-                        ? 'w-5 h-5 rounded-full bg-accent text-white font-bold text-[10px]'
+                        ? 'w-6 h-6 rounded-full bg-accent text-white font-bold text-[11px]'
                         : isPast ? 'text-gray-400 font-normal' : 'text-gray-700 font-medium'
                       }`}>
                       {date.getDate()}
                     </span>
                     {hasWorkout && (
-                      <span className="text-[9px] leading-tight bg-accent/90 text-white rounded px-1 py-0.5 max-w-[90%] truncate font-medium">
+                      <span className="text-[9px] md:text-[10px] leading-tight bg-accent/90 text-white rounded px-1 py-0.5 max-w-[90%] truncate font-medium">
                         {dayWorkouts[0].name || '✓'}
+                      </span>
+                    )}
+                    {hasWorkout && dayWorkouts[0].calories > 0 && (
+                      <span className="hidden md:block text-[10px] text-gray-400 mt-1">
+                        {dayWorkouts[0].calories} kcal
                       </span>
                     )}
                   </button>

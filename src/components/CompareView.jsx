@@ -11,8 +11,8 @@ import {
 
 const METRICS = [
   { key: 'calories', label: 'Calories (kcal)' },
-  { key: 'hrAvg', label: 'Avg HR (bpm)' },
-  { key: 'hrMax', label: 'Max HR (bpm)' },
+  { key: 'hrAvg',    label: 'Avg HR (bpm)' },
+  { key: 'hrMax',    label: 'Max HR (bpm)' },
   { key: 'duration', label: 'Duration (min)' },
 ]
 
@@ -26,11 +26,12 @@ function formatDate(iso) {
 }
 
 export default function CompareView({ workouts }) {
-  const workoutTypes = useMemo(() => {
-    return [...new Set(workouts.map(w => w.name).filter(Boolean))].sort()
-  }, [workouts])
+  const workoutTypes = useMemo(() =>
+    [...new Set(workouts.map(w => w.name).filter(Boolean))].sort(),
+    [workouts]
+  )
 
-  const [selectedType, setSelectedType] = useState('')
+  const [selectedType, setSelectedType]     = useState('')
   const [selectedMetric, setSelectedMetric] = useState('calories')
 
   const activeType = selectedType || workoutTypes[0] || ''
@@ -51,30 +52,37 @@ export default function CompareView({ workouts }) {
     [filtered, selectedMetric]
   )
 
+  const metricLabel = METRICS.find(m => m.key === selectedMetric)?.label || ''
+  const unit = metricLabel.match(/\((.+)\)/)?.[1] || ''
+
   if (workouts.length === 0) {
     return (
-      <div className="text-center py-16">
-        <p className="text-gray-400 text-sm">No workouts to compare yet</p>
-        <p className="text-gray-300 text-xs mt-1">Log workouts first, then compare them here</p>
+      <div className="max-w-4xl mx-auto px-4 md:px-8 py-6">
+        <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
+          <p className="text-gray-400 text-sm">No workouts to compare yet</p>
+          <p className="text-gray-300 text-xs mt-1">Log workouts first, then compare them here</p>
+        </div>
       </div>
     )
   }
 
-  const metricLabel = METRICS.find(m => m.key === selectedMetric)?.label || ''
-
   return (
-    <div className="p-4 pb-8 space-y-4">
-      <div className="grid grid-cols-2 gap-3">
+    <div className="max-w-4xl mx-auto px-4 md:px-8 py-6 space-y-6">
+      <div>
+        <h2 className="text-lg font-bold text-gray-900 mb-1">Compare Workouts</h2>
+        <p className="text-sm text-gray-400">Track performance across repeated sessions</p>
+      </div>
+
+      {/* Controls */}
+      <div className="flex flex-wrap gap-3">
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">Workout type</label>
           <select
             value={activeType}
             onChange={e => setSelectedType(e.target.value)}
-            className="input"
+            className="input w-44"
           >
-            {workoutTypes.map(t => (
-              <option key={t} value={t}>{t}</option>
-            ))}
+            {workoutTypes.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
         <div>
@@ -82,51 +90,41 @@ export default function CompareView({ workouts }) {
           <select
             value={selectedMetric}
             onChange={e => setSelectedMetric(e.target.value)}
-            className="input"
+            className="input w-44"
           >
-            {METRICS.map(m => (
-              <option key={m.key} value={m.key}>{m.label}</option>
-            ))}
+            {METRICS.map(m => <option key={m.key} value={m.key}>{m.label}</option>)}
           </select>
         </div>
       </div>
 
       {filtered.length === 0 ? (
-        <div className="text-center py-8 text-gray-400 text-sm">
+        <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 text-gray-400 text-sm">
           No sessions logged for "{activeType}"
         </div>
       ) : filtered.length < 2 ? (
-        <div className="text-center py-8 text-gray-400 text-sm">
+        <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 text-gray-400 text-sm">
           Log at least 2 "{activeType}" sessions to compare
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-xl border border-gray-100 p-3">
-            <p className="text-xs font-medium text-gray-500 mb-3">
-              {metricLabel} across {filtered.length} sessions
+          {/* Line chart */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-5">
+            <p className="text-sm font-semibold text-gray-700 mb-4">
+              {metricLabel} — {filtered.length} sessions
             </p>
-            <ResponsiveContainer width="100%" height={180}>
-              <LineChart data={chartData} margin={{ top: 4, right: 12, bottom: 0, left: -20 }}>
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={chartData} margin={{ top: 4, right: 16, bottom: 0, left: -10 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                <XAxis
-                  dataKey="session"
-                  tick={{ fontSize: 11, fill: '#9ca3af' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 10, fill: '#9ca3af' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
+                <XAxis dataKey="session" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
                 <Tooltip
                   content={({ active, payload }) => {
                     if (!active || !payload?.length) return null
                     const d = payload[0]?.payload
                     return (
-                      <div className="bg-white border border-gray-100 rounded-lg shadow-sm p-2 text-xs">
-                        <p className="font-medium text-gray-700">{d?.session} — {d?.date}</p>
-                        <p className="text-accent font-bold">{payload[0]?.value} {metricLabel.split('(')[1]?.replace(')', '') || ''}</p>
+                      <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-3 text-xs">
+                        <p className="font-semibold text-gray-700 mb-1">{d?.session} — {d?.date}</p>
+                        <p className="text-accent font-bold text-sm">{payload[0]?.value} <span className="font-normal text-gray-400">{unit}</span></p>
                       </div>
                     )
                   }}
@@ -136,65 +134,58 @@ export default function CompareView({ workouts }) {
                   dataKey="value"
                   stroke="#E24B4A"
                   strokeWidth={2.5}
-                  dot={{ r: 4, fill: '#E24B4A', strokeWidth: 0 }}
-                  activeDot={{ r: 5 }}
+                  dot={{ r: 5, fill: '#E24B4A', strokeWidth: 0 }}
+                  activeDot={{ r: 6 }}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">HR Zone Breakdown</p>
-            {filtered.map((w, i) => {
-              const total = w.zones?.reduce((a, b) => a + b, 0) || 0
-              if (total === 0) return null
-              return (
-                <div key={w.id} className="bg-white rounded-xl border border-gray-100 p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-gray-700">
-                      Session #{i + 1} — {formatDate(w.date)}
-                    </span>
-                    <span className="text-xs text-gray-400">{total} min</span>
+          {/* Zone breakdown */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">HR Zone Breakdown</h3>
+            <div className="grid md:grid-cols-2 gap-3">
+              {filtered.map((w, i) => {
+                const total = w.zones?.reduce((a, b) => a + b, 0) || 0
+                if (total === 0) return null
+                return (
+                  <div key={w.id} className="bg-white rounded-xl border border-gray-100 p-4">
+                    <div className="flex items-center justify-between mb-2.5">
+                      <span className="text-sm font-semibold text-gray-700">Session #{i + 1} — {formatDate(w.date)}</span>
+                      <span className="text-xs text-gray-400">{total} min</span>
+                    </div>
+                    <div className="flex h-4 rounded-lg overflow-hidden gap-px">
+                      {w.zones.map((z, zi) =>
+                        z > 0 ? (
+                          <div
+                            key={zi}
+                            style={{ width: `${(z / total) * 100}%`, backgroundColor: ZONE_COLORS[zi] }}
+                            title={`Z${zi + 1}: ${z} min`}
+                          />
+                        ) : null
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2.5">
+                      {w.zones.map((z, zi) => (
+                        <span key={zi} className="flex items-center gap-1 text-xs text-gray-500">
+                          <span className="inline-block w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: ZONE_COLORS[zi] }} />
+                          Z{zi + 1} {z}m
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex h-4 rounded-md overflow-hidden gap-px">
-                    {w.zones.map((z, zi) =>
-                      z > 0 ? (
-                        <div
-                          key={zi}
-                          style={{
-                            width: `${(z / total) * 100}%`,
-                            backgroundColor: ZONE_COLORS[zi],
-                          }}
-                          title={`Z${zi + 1}: ${z} min`}
-                        />
-                      ) : null
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
-                    {w.zones.map((z, zi) => (
-                      <span key={zi} className="flex items-center gap-1 text-[10px] text-gray-500">
-                        <span
-                          className="inline-block w-2 h-2 rounded-sm shrink-0"
-                          style={{ backgroundColor: ZONE_COLORS[zi] }}
-                        />
-                        Z{zi + 1} {z}m
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
 
-          <div className="bg-gray-50 rounded-xl p-3">
-            <p className="text-xs font-medium text-gray-500 mb-2">Zone legend</p>
-            <div className="space-y-1">
+          {/* Zone legend */}
+          <div className="bg-white rounded-xl border border-gray-100 p-4">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Zone Legend</p>
+            <div className="flex flex-wrap gap-x-6 gap-y-1.5">
               {ZONE_LABELS.map((label, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <span
-                    className="inline-block w-3 h-3 rounded-sm shrink-0"
-                    style={{ backgroundColor: ZONE_COLORS[i] }}
-                  />
+                  <span className="inline-block w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: ZONE_COLORS[i] }} />
                   <span className="text-xs text-gray-600">{label}</span>
                 </div>
               ))}
